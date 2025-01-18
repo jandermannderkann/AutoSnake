@@ -1,9 +1,10 @@
 int noSnek = 50;
-int SNEK_SEG_SIZE = 20;
+int SNEK_SEG_SIZE = 10;
 int BORED_AFTER = 100;
-int CHANCE_TURN = 90;
-int CHANCE_GROW = 50;
-int MAX_AGE = 1000000;
+int CHANCE_TURN = 95;
+int CHANCE_GROW = 80;
+int MAX_AGE = 100000;
+int MAX_SIZE = 100;
 
 class SnekSeg{
     float x;
@@ -48,7 +49,7 @@ class Snek {
     float dy =0;
     
     int age;
-    int bored_timer;
+    int bored_timer = int(random(0,BORED_AFTER));
 
     int newSegs = 0;
     color col;
@@ -65,14 +66,16 @@ class Snek {
 
 
         // initial speed
-        float speed = random(1,2);
+        float speed = SNEK_SEG_SIZE* random(0,SNEK_SEG_SIZE/10);
         if (random(0,2)>1) {
             speed = speed *-1;
         } 
         if (random(0,2)>1) {
             this.dx = speed;
+            this.dy = speed/10 + random(0,1);
         } else {
             this.dy = speed;
+            this.dx = speed/10 + random(0,1);
         }
     }
 
@@ -119,10 +122,10 @@ class Snek {
         for (SnekSeg seg : this.segs) {
             seg.act();
         }
-        if (random(0,100)>95) {
+        if (random(0,100)>CHANCE_GROW) {
             this.addSeg();
         }
-        if (this.bored_timer > BORED_AFTER && random(0,100)>CHANCE_GROW) {
+        if (this.bored_timer > BORED_AFTER && random(0,100)>CHANCE_TURN) {
             this.random_direction();
             this.bored_timer = 0;
         }
