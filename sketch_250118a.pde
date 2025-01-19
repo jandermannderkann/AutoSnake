@@ -180,8 +180,35 @@ class Snek extends PosObject {
     }
 }
 
+class Help {
+    ArrayList<String> lines;
+
+    public Help() {
+    }
+
+    void draw() {
+
+        ArrayList<String> lines = new ArrayList<String>();
+        lines.add("Help");
+        lines.add("d: Diag_MODE " + DIAG_MODE);
+        lines.add("b: BOMB_MODE " + BOMB_MODE);
+        this.lines = lines;
+
+        int lineHeight = 15;
+        for (int l = 0; l < lines.size(); l++) {
+            stroke(200);
+            fill(200);
+            textSize(15);
+            text(lines.get(l),100, 100+ l*15);
+            println(lines.get(l));
+        }
+    }
+    
+}
+
 
 class World {
+    Help help;
     ArrayList<Snek> sneks = new ArrayList<Snek>();
 
     void bomb(float x, float y, float size) {
@@ -192,7 +219,7 @@ class World {
         for (int r = 0; r<360; r+=1) {
             vec.rotate(radians(r));
             for (float dist=1; dist < size; dist+=5) {
-                PVector target = PVector.add(vec.setMag(dist),center);
+                PVector target = PVector.add(vec.setMag(150),center);
                 s.segs.add(target);
             }
         }
@@ -248,6 +275,9 @@ class World {
         for (Snek s : this.sneks) {
             s.draw();
         }
+        if (this.help != null) {
+            this.help.draw();
+        }
     }
 }
 
@@ -265,9 +295,22 @@ void draw(){
     w.draw();
 }
 
-
 void mouseClicked() {
     if (BOMB_MODE) {
         this.w.bomb(mouseX, mouseY, BOMB_SIZE);
+    }
+}
+
+
+void keyPressed() {
+    if (key == 'h') {
+        if (w.help == null) {
+            w.help = new Help();
+        } else {
+            w.help = null;
+        }
+    }
+    if (key == 'd') {
+        DIAG_MODE = !DIAG_MODE;
     }
 }
