@@ -1,8 +1,8 @@
-int noSnek = 50;
+int noSnek = 5;
 int SNEK_SEG_SIZE = 10;
-int BORED_AFTER = 100;
-int CHANCE_TURN = 95;
-int CHANCE_GROW = 80;
+int BORED_AFTER = 70;
+int CHANCE_TURN = 65;
+int CHANCE_GROW = 95;
 int MAX_AGE = 100000;
 int MAX_SIZE = 100;
 
@@ -41,13 +41,40 @@ class SnekSeg{
     }
 }
 
-class Snek {
-    float x;
-    float y;
+interface HasPos {
+    PVector getPos();
+    float x();
+    float y();
+    void sx(float x);
+    void sy(float y);
+}
+
+class PosObject implements HasPos {
+    PVector pos;
+
+    PVector getPos() {
+        return this.pos;
+    }
+    float x() {
+        return this.pos.x;
+    }
+    float y() {
+        return this.pos.y;
+    }
+    void sx(float x) {
+        this.pos.x = x;
+    }
+    void sy(float y) {
+        this.pos.y = y;
+    }
+}
+
+class Snek extends PosObject {
+    // PVector pos;
+
     int size;
-    float dx =0;
-    float dy =0;
-    
+    PVector speed = new PVector(0,SNEK_SEG_SIZE);
+
     int age;
     int bored_timer = int(random(0,BORED_AFTER));
 
@@ -56,27 +83,25 @@ class Snek {
     ArrayList<SnekSeg> segs = new ArrayList<SnekSeg>();
 
     public Snek() {
-        this.x = random(0,width);
-        this.y = random(0,height);
-        this.size = 1;
-
-        this.bored_timer = 0;
         this.age = 0;
+
+        //random start position
+        float x = random(0,width);
+        float y = random(0,height);
+        this.pos = new PVector(x,y);
+
+        //random size
+        this.size = int(random(0,10));
+        
+        //random timer
+        this.bored_timer = int(random(0,BORED_AFTER));
+        //random color
         this.col = color(random(100),random(50,100), random(0,200));
 
-
-        // initial speed
-        float speed = SNEK_SEG_SIZE* random(0,SNEK_SEG_SIZE/10);
-        if (random(0,2)>1) {
-            speed = speed *-1;
-        } 
-        if (random(0,2)>1) {
-            this.dx = speed;
-            this.dy = speed/10 + random(0,1);
-        } else {
-            this.dy = speed;
-            this.dx = speed/10 + random(0,1);
-        }
+        // random speed
+        PVector speed = new PVector(0, SNEK_SEG_SIZE);
+        this.speed = speed;
+        random_direction();
     }
 
     void addSeg() {
@@ -90,37 +115,52 @@ class Snek {
 
     void random_direction() {
         print("|> ");
-        
-        float speed = max(abs(this.dx), abs(this.dy));
-
         if (random(0,2)>1) {
-            speed = speed*-1;
-        } 
-        if (random(0,2)>1) {
-            this.dx = speed;
-            this.dy = speed/10;
+            this.speed.rotate(radians(90));
         } else {
-            this.dy=speed;
-            this.dx = speed/10;
+            this.speed.rotate(radians(-90));
         }
+        
+        // float speed = max(abs(this.dx), abs(this.dy));
+
+        // if (random(0,2)>1) {
+        //     speed = speed*-1;
+        // } 
+        // if (random(0,2)>1) {
+        //     this.dx = speed;
+        //     this.dy = 0;
+        // } else {
+        //     this.dy=speed;
+        //     this.dx = 0;
+        // }
     }
 
-    void move(float dx, float dy) {
-        x+=dx;
-        y+=dy;
+    void move() {
+        this.pos.add(this.speed);
+        // x+=dx;
+        // y+=dy;
         SnekSeg s = new SnekSeg (
-            x, y, this.size, this
+            this.x(), this.y(), this.size, this
         );
         this.segs.add(s);
     }
+    boolean dead() {
+        return this.age > MAX_AGE;
+    }
 
     void act() {
-        if (this.age > MAX_AGE) {
-            return;
-        }
-        this.move(this.dx, this.dy);
+        this.move();
         for (SnekSeg seg : this.segs) {
             seg.act();
+        }
+        ArrayList<SnekSeg> rm = new ArrayList<SnekSeg>();
+        for (SnekSeg seg : this.segs) {
+            if (seg.dead()) {
+                rm.add(seg);
+            }
+        }
+        for (SnekSeg seg : rm) {
+            this.segs.remove(seg);
         }
         if (random(0,100)>CHANCE_GROW) {
             this.addSeg();
@@ -150,37 +190,41 @@ class World {
             this.sneks.add(new Snek());
         }
     }
+
+    void constrain_to_world(Snek s) {
+        if (s.x() > width) {
+            s.sx(0);
+        } else if (s.x() < 0) {
+            s.sx(width);
+        }
+        if (s.y() > height) {
+            s.sy(0);
+        } else if (s.y() < 0) {
+            s.sy(width);
+        }
+    }
     void act() {
         for (Snek s : this.sneks) {
             s.act();
         }
         for (Snek s : this.sneks) {
-            if (s.x > width) {
-                s.x=0;
-            } else if (s.x < 0) {
-                s.x = width;
-            }
-            if (s.y > height) {
-                s.y=0;
-            } else if (s.y < 0) {
-                s.y = width;
-            }
+            constrain_to_world(s);
         }
-
     }
+
     void draw() {
         background(20);
         for (Snek s : this.sneks) {
             s.draw();
         }
-        // line(i,i,0,0);
     }
 }
 
 World w;
 void setup() {
     size(1920,1080);
-    // frameRate(5);
+    frameRate(60);
+
     w = new World();
 }
 
