@@ -1,45 +1,16 @@
-int noSnek = 5;
+int noSnek = 50;
 int SNEK_SEG_SIZE = 10;
 int BORED_AFTER = 70;
 int CHANCE_TURN = 65;
 int CHANCE_GROW = 95;
 int MAX_AGE = 100000;
 int MAX_SIZE = 100;
+color bg = color(10);
+int BOMB_SIZE = 200;
 
-class SnekSeg{
-    float x;
-    float y;
-    float size;
-    int life;
-    color col;
-    boolean head = false;
-    Snek daddy;
-
-    public SnekSeg(float x, float y, int life, Snek daddy) {
-        this.x=x;
-        this.y=y;
-        this.life = life;
-        this.size = SNEK_SEG_SIZE;
-        this.daddy = daddy;
-        this.col = daddy.col;
-    }
-    boolean dead() {
-        return this.life<0;
-    }
-    void act() {
-        this.life--;
-    }
-    void draw() {
-        if (this.dead()) {
-            return;
-        }
-        if(this.life != this.daddy.size) {
-            noStroke();
-        }
-        fill(this.col);
-        rect(this.x, this.y, this.size, this.size);
-    }
-}
+boolean DIAG_MODE = true;
+boolean BOMB_MODE = true;
+boolean SHOW_BOMB = true;
 
 interface HasPos {
     PVector getPos();
@@ -80,10 +51,12 @@ class Snek extends PosObject {
 
     int newSegs = 0;
     color col;
-    ArrayList<SnekSeg> segs = new ArrayList<SnekSeg>();
+    ArrayList<PVector> segs = new ArrayList<PVector>();
+    World w;
 
-    public Snek() {
+    public Snek(World w) {
         this.age = 0;
+        this.w = w;
 
         //random start position
         float x = random(0,width);
@@ -91,8 +64,8 @@ class Snek extends PosObject {
         this.pos = new PVector(x,y);
 
         //random size
-        this.size = int(random(0,10));
-        
+        this.size = 1;
+        this.segs.add(this.pos.copy());
         //random timer
         this.bored_timer = int(random(0,BORED_AFTER));
         //random color
@@ -103,65 +76,75 @@ class Snek extends PosObject {
         this.speed = speed;
         random_direction();
     }
+    void createSegs() {
+      this.newSegs = this.size;
+      for (int i=0; i< this.size; i++) {
+        this.move();
+      }
+    }
+    
 
     void addSeg() {
-        print("++ ");
+        // print("++ ");
         this.newSegs++;
         this.size++;
-        for (SnekSeg s : this.segs) {
-            s.life++;
-        }
     }
 
     void random_direction() {
-        print("|> ");
+        float turnDeg = 90;
+        float currDeg = this.speed.heading();
+
+        if(false) {
+            turnDeg = currDeg + currDeg % 90;
+        }
+
+        if (DIAG_MODE) {
+            turnDeg += random(0,5);
+        }
         if (random(0,2)>1) {
-            this.speed.rotate(radians(90));
-        } else {
-            this.speed.rotate(radians(-90));
+            turnDeg *= -1;
         }
         
-        // float speed = max(abs(this.dx), abs(this.dy));
 
-        // if (random(0,2)>1) {
-        //     speed = speed*-1;
-        // } 
-        // if (random(0,2)>1) {
-        //     this.dx = speed;
-        //     this.dy = 0;
-        // } else {
-        //     this.dy=speed;
-        //     this.dx = 0;
-        // }
+        this.speed.rotate(radians(turnDeg));
+    }
+    
+    void avoidCollision() {
+        boolean collision = this.w.checkCollision(this);
+        int trys = 4;
+        while(collision & trys>0) {
+            random_direction();
+            collision = this.w.checkCollision(this);
+            trys--;
+        }
+        //if try <1;
     }
 
     void move() {
         this.pos.add(this.speed);
-        // x+=dx;
-        // y+=dy;
-        SnekSeg s = new SnekSeg (
-            this.x(), this.y(), this.size, this
-        );
-        this.segs.add(s);
+        PVector head = this.pos.copy();
+        this.segs.add(head);
+        // println(String.format("Moved to %f,%f by speed %f,%f",head.x, head.y, this.speed.x, this.speed.y));
+
+        if (this.newSegs > 0) {
+            this.newSegs -= 1;
+        } else {
+            this.segs.remove(0);
+        }
     }
     boolean dead() {
         return this.age > MAX_AGE;
     }
 
+    PVector getNextPos() {
+        return PVector.add(this.pos, this.speed);
+    }
+
     void act() {
+        this.avoidCollision();
+
         this.move();
-        for (SnekSeg seg : this.segs) {
-            seg.act();
-        }
-        ArrayList<SnekSeg> rm = new ArrayList<SnekSeg>();
-        for (SnekSeg seg : this.segs) {
-            if (seg.dead()) {
-                rm.add(seg);
-            }
-        }
-        for (SnekSeg seg : rm) {
-            this.segs.remove(seg);
-        }
+
         if (random(0,100)>CHANCE_GROW) {
             this.addSeg();
         }
@@ -174,10 +157,26 @@ class Snek extends PosObject {
 
     }
 
+    void drawSeg(PVector p) {
+        noStroke();
+        fill(this.col);
+        rect(p.x, p.y, SNEK_SEG_SIZE, SNEK_SEG_SIZE);
+    }
+
     void draw() {
-        for (SnekSeg seg : this.segs) {
-            seg.draw();
+        for (PVector seg : this.segs) {
+            drawSeg(seg);
         }
+    }
+
+    boolean collides(PVector head, float headSize) {
+        for (PVector seg: this.segs) {
+            if (seg.dist(head)< SNEK_SEG_SIZE + headSize) {
+                // print(String.format("S %f,%f COLLIDES w %f,%f",seg.x, seg.y, head.x, head.y));
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -185,22 +184,54 @@ class Snek extends PosObject {
 class World {
     ArrayList<Snek> sneks = new ArrayList<Snek>();
 
+    void bomb(float x, float y, float size) {
+        println("BOMB");
+        Snek s = new Snek(this);
+        PVector vec = new PVector(0,1);
+        PVector center = new PVector(x,y);
+        for (int r = 0; r<360; r+=1) {
+            vec.rotate(radians(r));
+            for (float dist=1; dist < size; dist+=5) {
+                PVector target = PVector.add(vec.setMag(dist),center);
+                s.segs.add(target);
+            }
+        }
+        s.age = MAX_AGE;
+        if (!SHOW_BOMB) {
+
+        }
+        this.sneks.add(s);
+
+    }
     public World() {
         for (int i = noSnek; i>0; i--) {
-            this.sneks.add(new Snek());
+            this.sneks.add(new Snek(this));
         }
     }
 
+    boolean checkCollision(Snek snekToCheck) {
+        PVector newHead = snekToCheck.getNextPos();
+        float size = SNEK_SEG_SIZE;
+
+        for (Snek s: this.sneks) {
+            if (s==snekToCheck) {continue;}
+            if (s.collides(newHead, size)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     void constrain_to_world(Snek s) {
-        if (s.x() > width) {
+        if (s.x() > width-0) {
             s.sx(0);
         } else if (s.x() < 0) {
             s.sx(width);
         }
-        if (s.y() > height) {
+        if (s.y() > height-0) {
             s.sy(0);
         } else if (s.y() < 0) {
-            s.sy(width);
+            s.sy(height);
         }
     }
     void act() {
@@ -213,7 +244,7 @@ class World {
     }
 
     void draw() {
-        background(20);
+        background(bg);
         for (Snek s : this.sneks) {
             s.draw();
         }
@@ -232,4 +263,11 @@ void setup() {
 void draw(){
     w.act();
     w.draw();
+}
+
+
+void mouseClicked() {
+    if (BOMB_MODE) {
+        this.w.bomb(mouseX, mouseY, BOMB_SIZE);
+    }
 }
