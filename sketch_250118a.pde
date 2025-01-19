@@ -8,9 +8,16 @@ int MAX_SIZE = 100;
 color bg = color(10);
 int BOMB_SIZE = 200;
 
-boolean DIAG_MODE = true;
+boolean DIAG_MODE = false;
+boolean TURN_RESET_MODE = false;
 boolean BOMB_MODE = true;
 boolean SHOW_BOMB = true;
+
+boolean VAR_SEG_SIZE = false;
+boolean CENTER_MODE = false;
+
+
+
 
 interface HasPos {
     PVector getPos();
@@ -40,19 +47,32 @@ class PosObject implements HasPos {
     }
 }
 
+class SnekSeg extends PosObject {
+    // PVector pos;
+    float size;
+
+    public SnekSeg(PVector pos, float size) {
+        this.pos = pos;
+        this.size = size - random(0, SNEK_SEG_SIZE/3);
+    }
+}
+
 class Snek extends PosObject {
     // PVector pos;
-
-    int size;
     PVector speed = new PVector(0,SNEK_SEG_SIZE);
 
+    World w;
+
     int age;
+    color col;
     int bored_timer = int(random(0,BORED_AFTER));
+    int size;
 
     int newSegs = 0;
-    color col;
-    ArrayList<PVector> segs = new ArrayList<PVector>();
-    World w;
+
+    ArrayList<SnekSeg> segs = new ArrayList<SnekSeg>();
+    // ArrayList<PVector> segs = new ArrayList<PVector>();
+    // ArrayList<float> segSize = new ArrayList<float>();
 
     public Snek(World w) {
         this.age = 0;
@@ -65,7 +85,8 @@ class Snek extends PosObject {
 
         //random size
         this.size = 1;
-        this.segs.add(this.pos.copy());
+        this.segs.add(new SnekSeg(this.pos.copy(), SNEK_SEG_SIZE));
+
         //random timer
         this.bored_timer = int(random(0,BORED_AFTER));
         //random color
@@ -76,13 +97,6 @@ class Snek extends PosObject {
         this.speed = speed;
         random_direction();
     }
-    void createSegs() {
-      this.newSegs = this.size;
-      for (int i=0; i< this.size; i++) {
-        this.move();
-      }
-    }
-    
 
     void addSeg() {
         // print("++ ");
@@ -95,7 +109,11 @@ class Snek extends PosObject {
         float currDeg = this.speed.heading();
 
         if(false) {
-            turnDeg = currDeg + currDeg % 90;
+            int div = int(currDeg / 90);
+            float newDeg = div*90;
+            PVector newSpeed = PVector.fromAngle(radians(newDeg));
+            newSpeed.setMag(this.speed.mag());
+            this.speed=newSpeed;
         }
 
         if (DIAG_MODE) {
@@ -123,7 +141,7 @@ class Snek extends PosObject {
     void move() {
         this.pos.add(this.speed);
         PVector head = this.pos.copy();
-        this.segs.add(head);
+        this.segs.add( new SnekSeg(head, SNEK_SEG_SIZE));
         // println(String.format("Moved to %f,%f by speed %f,%f",head.x, head.y, this.speed.x, this.speed.y));
 
         if (this.newSegs > 0) {
@@ -157,21 +175,23 @@ class Snek extends PosObject {
 
     }
 
-    void drawSeg(PVector p) {
+    void drawSeg(PVector p, float size) {
+        if (CENTER_MODE) rectMode(CENTER);
+        else rectMode(CORNER);
         noStroke();
         fill(this.col);
-        rect(p.x, p.y, SNEK_SEG_SIZE, SNEK_SEG_SIZE);
+        rect(p.x, p.y, size, size);
     }
 
     void draw() {
-        for (PVector seg : this.segs) {
-            drawSeg(seg);
+        for (SnekSeg seg: this.segs) {
+            drawSeg(seg.pos, seg.size);
         }
     }
 
     boolean collides(PVector head, float headSize) {
-        for (PVector seg: this.segs) {
-            if (seg.dist(head)< SNEK_SEG_SIZE + headSize) {
+        for (SnekSeg seg: this.segs) {
+            if (seg.pos.dist(head)< SNEK_SEG_SIZE + headSize) {
                 // print(String.format("S %f,%f COLLIDES w %f,%f",seg.x, seg.y, head.x, head.y));
                 return true;
             }
@@ -192,6 +212,8 @@ class Help {
         lines.add("Help");
         lines.add("d: Diag_MODE " + DIAG_MODE);
         lines.add("b: BOMB_MODE " + BOMB_MODE);
+        lines.add("s: VAR_SEG_SIZE " + VAR_SEG_SIZE);
+        lines.add("c: CENTER_MODE " + CENTER_MODE);
         this.lines = lines;
 
         int lineHeight = 15;
@@ -212,22 +234,22 @@ class World {
     ArrayList<Snek> sneks = new ArrayList<Snek>();
 
     void bomb(float x, float y, float size) {
-        println("BOMB");
-        Snek s = new Snek(this);
-        PVector vec = new PVector(0,1);
-        PVector center = new PVector(x,y);
-        for (int r = 0; r<360; r+=1) {
-            vec.rotate(radians(r));
-            for (float dist=1; dist < size; dist+=5) {
-                PVector target = PVector.add(vec.setMag(150),center);
-                s.segs.add(target);
-            }
-        }
-        s.age = MAX_AGE;
-        if (!SHOW_BOMB) {
+    //     println("BOMB");
+    //     Snek s = new Snek(this);
+    //     PVector vec = new PVector(0,1);
+    //     PVector center = new PVector(x,y);
+    //     for (int r = 0; r<360; r+=1) {
+    //         vec.rotate(radians(r));
+    //         for (float dist=1; dist < size; dist+=5) {
+    //             PVector target = PVector.add(vec.setMag(150),center);
+    //             s.segs.add(target);
+    //         }
+    //     }
+    //     s.age = MAX_AGE;
+    //     if (!SHOW_BOMB) {
 
-        }
-        this.sneks.add(s);
+    //     }
+    //     this.sneks.add(s);
 
     }
     public World() {
@@ -312,5 +334,11 @@ void keyPressed() {
     }
     if (key == 'd') {
         DIAG_MODE = !DIAG_MODE;
+    }
+    if (key == 's') {
+        VAR_SEG_SIZE = !VAR_SEG_SIZE;
+    }
+    if (key == 'c') {
+        CENTER_MODE = !CENTER_MODE;
     }
 }
