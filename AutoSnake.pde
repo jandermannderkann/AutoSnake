@@ -9,7 +9,11 @@ int MAX_SIZE = 100;
 
 int GAP_SIZE = 3;
 
+int fr = 30;
 color bg = color(10);
+color LAST_SEG_COL = color(10);
+
+
 int BOMB_SIZE = 200;
 
 boolean GRID_MODE = true;
@@ -19,6 +23,7 @@ boolean BOMB_MODE = true;
 boolean DIAG_MODE = false;
 boolean TURN_RESET_MODE = false;
 boolean SHOW_BOMB = true;
+boolean CLEAR_BG_MODE = true;
 
 boolean VAR_SEG_SIZE = true;
 int COLOR_MODE = 0;
@@ -74,9 +79,9 @@ class SnekSeg extends PosObject {
 
         this.col = col;
         if (COLOR_MODE==0) {
-            this.col = randCol();
+            this.col = color(red(this.col)+random(0,50), green(this.col)+random(0,50),blue(this.col)+random(0,50));
         } else if (COLOR_MODE == 2) {
-            // this.col = color()
+            this.col = randCol();
         }
     }
 }
@@ -95,6 +100,8 @@ class Snek extends PosObject {
     int newSegs = 0;
 
     ArrayList<SnekSeg> segs = new ArrayList<SnekSeg>();
+    SnekSeg lastSeg;
+
     // ArrayList<PVector> segs = new ArrayList<PVector>();
     // ArrayList<float> segSize = new ArrayList<float>();
 
@@ -179,6 +186,7 @@ class Snek extends PosObject {
         if (this.newSegs > 0) {
             this.newSegs -= 1;
         } else {
+            this.lastSeg = segs.get(0);
             this.segs.remove(0);
         }
     }
@@ -206,12 +214,15 @@ class Snek extends PosObject {
         this.age ++;
 
     }
-
     void drawSeg(SnekSeg seg) {
+        drawSeg(seg, seg.col);
+    }
+
+    void drawSeg(SnekSeg seg, color c) {
         PVector p = seg.pos;
         float size = seg.size;
 
-        fill(seg.col);
+        fill(c);
         rect(p.x, p.y, size, size);
     }
 
@@ -221,9 +232,12 @@ class Snek extends PosObject {
         else rectMode(CORNER);
         
         noStroke();
-        for (SnekSeg seg: this.segs) {
-            drawSeg(seg);
-        }
+        //for (SnekSeg seg: this.segs) {
+        //    drawSeg(seg);
+        //}
+        drawSeg(lastSeg, segs.get(0).col);
+        drawSeg(lastSeg, LAST_SEG_COL);
+
     }
 
     boolean collides(PVector head, float headSize) {
@@ -257,6 +271,7 @@ class Help {
         lines.add(" : GAP_SIZE " + GAP_SIZE);
         lines.add("r: !reset ");
         lines.add("p: SPAWN_MODE" + SPAWN_MODE);
+        lines.add("n: CLEAR_BG_MODE" + CLEAR_BG_MODE);
         this.lines = lines;
 
         int lineHeight = 15;
@@ -352,7 +367,12 @@ class World {
     }
 
     void draw() {
-        background(bg);
+        if (CLEAR_BG_MODE) {
+            background(bg);
+        } else {
+            //fill(0,0,0,100);
+            //rect(width/2,height/2,width, height);
+        }
         for (Snek s : this.sneks) {
             s.draw();
         }
@@ -365,7 +385,7 @@ class World {
 World w;
 void setup() {
     size(1920,1080);
-    frameRate(60);
+    frameRate(fr);
 
     w = new World();
 }
@@ -409,17 +429,29 @@ void keyPressed() {
     }
     if (key == 'l') {
         COLOR_MODE++;
-        if (COLOR_MODE>1) {
+        if (COLOR_MODE>2) {
             COLOR_MODE=0;
         }
     }
     if (key == 'r') {
         w.reset();
     }
+    if (key == 'n') {
+        CLEAR_BG_MODE = !CLEAR_BG_MODE;
+    }
     if (key == 'p') {
         SPAWN_MODE = !SPAWN_MODE;
     }
     if (key == 'a') {
         w.spawn(10);
+    }
+
+    if (key == '9') {
+        fr+=3;
+        frameRate(fr);
+    }
+    if (key == '0') {
+        fr-=3;
+        frameRate(fr);
     }
 }
