@@ -1,5 +1,5 @@
 int noSnek = 60;
-int SNEK_SEG_SIZE = 15;
+int SNEK_SEG_SIZE = 5;
 int BORED_AFTER = 10;
 int CHANCE_TURN = 25;
 int CHANCE_GROW = 95;
@@ -7,7 +7,7 @@ int MAX_AGE = 100000;
 int MAX_SIZE = 100;
 
 
-int GAP_SIZE = 3;
+int GAP_SIZE = 0;
 
 int fr = 30;
 color bg = color(10);
@@ -16,9 +16,13 @@ color LAST_SEG_COL = color(10);
 
 int BOMB_SIZE = 200;
 
+boolean VARYING_BOREDNESS =  true;
 boolean GRID_MODE = true;
-boolean SPAWN_MODE = true;
-boolean BOMB_MODE = true;
+boolean SPAWN_MODE = false;
+boolean STOP_MODE = true;
+boolean STOP = false;
+int SPAWN_COUNT = 20;
+boolean BOMB_MODE = false;
 
 boolean DIAG_MODE = false;
 boolean TURN_RESET_MODE = false;
@@ -26,7 +30,7 @@ boolean SHOW_BOMB = true;
 boolean CLEAR_BG_MODE = true;
 
 boolean VAR_SEG_SIZE = true;
-int COLOR_MODE = 0;
+int COLOR_MODE = 2;
 boolean CENTER_MODE = true;
 
 
@@ -79,9 +83,17 @@ class SnekSeg extends PosObject {
 
         this.col = col;
         if (COLOR_MODE==0) {
+            //slight hue
             this.col = color(red(this.col)+random(0,50), green(this.col)+random(0,50),blue(this.col)+random(0,50));
-        } else if (COLOR_MODE == 2) {
+        } else if (COLOR_MODE == 1) {
+            //rainbow
             this.col = randCol();
+        } else if (COLOR_MODE ==2) {
+            // strong hue
+            this.col = color(red(this.col)+random(0,100), green(this.col)+random(0,100),blue(this.col)+random(0,100));
+        } else if (COLOR_MODE ==3) {
+            // greyscale
+            this.col = color(random(100,200));
         }
     }
 }
@@ -89,14 +101,15 @@ class SnekSeg extends PosObject {
 class Snek extends PosObject {
     // PVector pos;
     PVector speed = new PVector(0,SNEK_SEG_SIZE);
-
+    
     World w;
 
     int age;
     color col;
-    int bored_timer = int(random(0,BORED_AFTER));
+    int bored_after;
+    int bored_timer;
     int size;
-
+    
     int newSegs = 0;
 
     ArrayList<SnekSeg> segs = new ArrayList<SnekSeg>();
@@ -127,7 +140,12 @@ class Snek extends PosObject {
         this.segs.add(new SnekSeg(this.pos.copy(), SNEK_SEG_SIZE, this.col));
 
         //random timer
-        this.bored_timer = int(random(0,BORED_AFTER));
+        if (VARYING_BOREDNESS) {
+            this.bored_after = int(random(0,BORED_AFTER));
+        } else {
+            this.bored_after = BORED_AFTER;
+        }
+        this.bored_timer = 0;
         //random color
         this.col = color(random(200),random(50,100), random(0,200));
 
@@ -142,31 +160,57 @@ class Snek extends PosObject {
         this.newSegs++;
         this.size++;
     }
+    /**
+     * For a given turn-radius, returns possible total turn degrees. 
+     * This is all multiples of the turn-radius, which are not 180, or 180+-turn_radius. 
+     * Ex: for 60: 0,60,-60,120,-120
+     */
+    ArrayList<Float> get_turn_options(int turn_radius) {
+        ArrayList<Float> options = new ArrayList<Float>();
+        for (int degrees = 0; degrees <= 180-turn_radius; degrees += turn_radius) {
+            options.add(new Float(degrees));
+            options.add(new Float(degrees*-1));
+        }   
+        return options;
+    }
+
+    float align_heading_to_turn_options(float heading, ArrayList<Float> options) {
+        float smallest_diff = 360;
+        float best_option = 0;
+        for (float option: options) {
+            if (heading - option <smallest_diff ) {
+                smallest_diff = heading-option;
+                best_option = option;
+            }
+        }
+        return best_option;
+    }
 
     void random_direction() {
-        float turnDeg = 90;
-        float currDeg = this.speed.heading();
-
-        if(false) {
-            int div = int(currDeg / 90);
-            float newDeg = div*90;
-            PVector newSpeed = PVector.fromAngle(radians(newDeg));
-            newSpeed.setMag(this.speed.mag());
-            this.speed=newSpeed;
-        }
-
+        int turnRadius = 60;
+        float heading = degrees(this.speed.heading());
+        
+        ArrayList<Float> options  = get_turn_options(turnRadius);
+        
+        //reset to multiples of turn-radius
+        float aligned_Heading = int(heading / turnRadius)*turnRadius;
+        float rotation = aligned_Heading-heading; // turn back to aligned
+        
         if (DIAG_MODE) {
-            turnDeg += random(0,5);
+            rotation += random(0,5);
         }
+
         if (random(0,2)>1) {
-            turnDeg *= -1;
+            rotation += -1*turnRadius;
+        } else {
+            rotation += turnRadius;
         }
         
 
-        this.speed.rotate(radians(turnDeg));
+        this.speed.rotate(radians(rotation));
     }
     
-    void avoidCollision() {
+    boolean avoidCollision() {
         boolean collision = this.w.checkCollision(this);
         int trys = 4;
         while(collision & trys>0) {
@@ -174,10 +218,15 @@ class Snek extends PosObject {
             collision = this.w.checkCollision(this);
             trys--;
         }
-        //if try <1;
+        // all blocked
+        if (trys <1) {
+            return false;
+        }
+        return true;
     }
 
     void move() {
+        this.speed.setMag(SNEK_SEG_SIZE);
         this.pos.add(this.speed);
         PVector head = this.pos.copy();
         this.segs.add( new SnekSeg(head, SNEK_SEG_SIZE, this.col));
@@ -199,14 +248,23 @@ class Snek extends PosObject {
     }
 
     void act() {
-        this.avoidCollision();
-
-        this.move();
+        boolean stuck = !this.avoidCollision();
+        if (!stuck) {
+            this.move();
+        } else {
+            //is stuck
+            if (this.segs.size() > 1 ) {
+              this.segs.remove(0);
+            } else {
+              println("Snek has length 0");
+            }
+            
+        }
 
         if (random(0,100)>CHANCE_GROW) {
             this.addSeg();
         }
-        if (this.bored_timer > BORED_AFTER && random(0,100)>CHANCE_TURN) {
+        if (this.bored_timer > this.bored_after && random(0,100)>CHANCE_TURN) {
             this.random_direction();
             this.bored_timer = 0;
         }
@@ -232,17 +290,19 @@ class Snek extends PosObject {
         else rectMode(CORNER);
         
         noStroke();
-        //for (SnekSeg seg: this.segs) {
-        //    drawSeg(seg);
-        //}
-        drawSeg(lastSeg, segs.get(0).col);
-        drawSeg(lastSeg, LAST_SEG_COL);
-
+        for (SnekSeg seg: this.segs) {
+           drawSeg(seg);
+        }
+        // dark mode
+        if (!CLEAR_BG_MODE) {
+            drawSeg(lastSeg, segs.get(0).col);
+            drawSeg(lastSeg, LAST_SEG_COL);
+        }
     }
 
     boolean collides(PVector head, float headSize) {
         for (SnekSeg seg: this.segs) {
-            if (seg.pos.dist(head) <= SNEK_SEG_SIZE/2 + headSize/2 + GAP_SIZE) {
+            if (seg.pos.dist(head) < SNEK_SEG_SIZE/2 + headSize/2 + GAP_SIZE) {
                 // print(String.format("S %f,%f COLLIDES w %f,%f",seg.x, seg.y, head.x, head.y));
                 return true;
             }
@@ -262,16 +322,29 @@ class Help {
 
         ArrayList<String> lines = new ArrayList<String>();
         lines.add("Help");
-        lines.add("d: Diag_MODE " + DIAG_MODE);
-        lines.add("b: BOMB_MODE " + BOMB_MODE);
-        lines.add("s: VAR_SEG_SIZE " + VAR_SEG_SIZE);
-        lines.add("c: CENTER_MODE " + CENTER_MODE);
-        lines.add("g: GRID_MODE" + GRID_MODE);
-        lines.add("l: COLOR_MODE " + COLOR_MODE);
+        lines.add("h: Help");
+        lines.add("r: Clearn Screen ");
+        lines.add("d: Move diagonally " + DIAG_MODE);
+        lines.add("n: Draw Trails" + CLEAR_BG_MODE);
+        lines.add("s: Uniform segment size " + VAR_SEG_SIZE);
+        
+        lines.add("-: Smaller" + SNEK_SEG_SIZE);
+        lines.add("+: Bigger");
+        
+        lines.add("p: Click to spawn one snake (Spawn mode)" + SPAWN_MODE);
+        lines.add("Spawn Mode: ");
+        lines.add("  a: Spawn multiple: " + SPAWN_COUNT);
+        lines.add("  +: Spawn more ");
+        lines.add("  -: Spawn less");
+
+        lines.add(",: Animation faster");
+        lines.add(".: Animation slower");
+        lines.add("o: Click to stop" + STOP_MODE);
+        
+        lines.add("c: Centered segments " + CENTER_MODE);
+        lines.add("g: Align to grid (TODO) " + GRID_MODE);
         lines.add(" : GAP_SIZE " + GAP_SIZE);
-        lines.add("r: !reset ");
-        lines.add("p: SPAWN_MODE" + SPAWN_MODE);
-        lines.add("n: CLEAR_BG_MODE" + CLEAR_BG_MODE);
+        lines.add("b: BOMB_MODE TODO" + BOMB_MODE);
         this.lines = lines;
 
         int lineHeight = 15;
@@ -280,7 +353,7 @@ class Help {
             fill(200);
             textSize(15);
             text(lines.get(l),100, 100+ l*15);
-            println(lines.get(l));
+            // println(lines.get(l));
         }
     }
     
@@ -305,6 +378,7 @@ class World {
     ArrayList<Snek> sneks = new ArrayList<Snek>();
 
     void reset() {
+        background(bg);
         this.sneks.clear();
     }
 
@@ -337,7 +411,6 @@ class World {
         float size = SNEK_SEG_SIZE;
 
         for (Snek s: this.sneks) {
-            if (s==snekToCheck) {continue;}
             if (s.collides(newHead, size)){
                 return true;
             }
@@ -404,6 +477,12 @@ void mouseClicked() {
         Snek s = new Snek(w, mouseX, mouseY);
         this.w.sneks.add(s);
     }
+    if (STOP_MODE) {
+        STOP=!STOP;
+        if (STOP) {
+            noLoop();
+        } else {loop();}
+    }
 }
 
 
@@ -418,6 +497,9 @@ void keyPressed() {
     if (key == 'd') {
         DIAG_MODE = !DIAG_MODE;
     }
+    if (key == 'b') {
+        BOMB_MODE = !BOMB_MODE;
+    }
     if (key == 's') {
         VAR_SEG_SIZE = !VAR_SEG_SIZE;
     }
@@ -429,7 +511,7 @@ void keyPressed() {
     }
     if (key == 'l') {
         COLOR_MODE++;
-        if (COLOR_MODE>2) {
+        if (COLOR_MODE>4) {
             COLOR_MODE=0;
         }
     }
@@ -439,18 +521,33 @@ void keyPressed() {
     if (key == 'n') {
         CLEAR_BG_MODE = !CLEAR_BG_MODE;
     }
+    if (key == 'a') {
+        w.spawn(SPAWN_COUNT);
+    }
     if (key == 'p') {
         SPAWN_MODE = !SPAWN_MODE;
     }
-    if (key == 'a') {
-        w.spawn(10);
+    if (!SPAWN_MODE) {
+        if (key == '+') {
+            SNEK_SEG_SIZE ++;
+        }
+        if (key == '-') {
+            SNEK_SEG_SIZE --;
+        }
+    }else {
+        if (key == '+') {
+            SPAWN_COUNT +=2;
+        }
+        if (key == '-') {
+            SPAWN_COUNT -=2;
+        }
     }
 
-    if (key == '9') {
+    if (key == ',') {
         fr+=3;
         frameRate(fr);
     }
-    if (key == '0') {
+    if (key == '.') {
         fr-=3;
         frameRate(fr);
     }
