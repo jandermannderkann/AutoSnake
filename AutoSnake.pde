@@ -1,10 +1,13 @@
 int noSnek = 60;
-int SNEK_SEG_SIZE = 5;
+int SNEK_SEG_SIZE = 15;
 int BORED_AFTER = 10;
 int CHANCE_TURN = 25;
 int CHANCE_GROW = 95;
 int MAX_AGE = 100000;
 int MAX_SIZE = 100;
+
+
+int TURN_RADIUS = 60;
 
 
 int GAP_SIZE = 0;
@@ -16,7 +19,9 @@ color LAST_SEG_COL = color(10);
 
 int BOMB_SIZE = 200;
 
-boolean VARYING_BOREDNESS =  true;
+boolean RECT_MODE =  false;
+boolean VARIABLE_TURNS =  false;
+boolean VARYING_BOREDNESS =  false;
 boolean GRID_MODE = true;
 boolean SPAWN_MODE = false;
 boolean STOP_MODE = true;
@@ -68,6 +73,18 @@ color randCol() {
     return color(random(0,200), random(0,200), random(0,200));
 }
 
+
+class Bomb extends PosObject  {
+    int age = 0;
+
+    void act() {
+        age++;
+    }
+    void dead () {
+
+    }
+    void draw () {
+        // circle()
 class SnekSeg extends PosObject {
     // PVector pos;
     float size;
@@ -151,6 +168,7 @@ class Snek extends PosObject {
 
         // random speed
         PVector speed = new PVector(0, SNEK_SEG_SIZE);
+        speed.rotate(radians(random(0,360)));
         this.speed = speed;
         random_direction();
     }
@@ -160,6 +178,7 @@ class Snek extends PosObject {
         this.newSegs++;
         this.size++;
     }
+
     /**
      * For a given turn-radius, returns possible total turn degrees. 
      * This is all multiples of the turn-radius, which are not 180, or 180+-turn_radius. 
@@ -167,7 +186,12 @@ class Snek extends PosObject {
      */
     ArrayList<Float> get_turn_options(int turn_radius) {
         ArrayList<Float> options = new ArrayList<Float>();
-        for (int degrees = 0; degrees <= 180-turn_radius; degrees += turn_radius) {
+        float maxRadius = 180-turn_radius;
+        if (!VARIABLE_TURNS) {
+            maxRadius = turn_radius;
+        }
+
+        for (int degrees = 0; degrees <= maxRadius; degrees += turn_radius) {
             options.add(new Float(degrees));
             options.add(new Float(degrees*-1));
         }   
@@ -187,7 +211,7 @@ class Snek extends PosObject {
     }
 
     void random_direction() {
-        int turnRadius = 60;
+        int turnRadius = TURN_RADIUS;
         float heading = degrees(this.speed.heading());
         
         ArrayList<Float> options  = get_turn_options(turnRadius);
@@ -200,12 +224,8 @@ class Snek extends PosObject {
             rotation += random(0,5);
         }
 
-        if (random(0,2)>1) {
-            rotation += -1*turnRadius;
-        } else {
-            rotation += turnRadius;
-        }
-        
+        int select = int(random(0,options.size()));
+        rotation += options.get(select);
 
         this.speed.rotate(radians(rotation));
     }
@@ -230,7 +250,6 @@ class Snek extends PosObject {
         this.pos.add(this.speed);
         PVector head = this.pos.copy();
         this.segs.add( new SnekSeg(head, SNEK_SEG_SIZE, this.col));
-        // println(String.format("Moved to %f,%f by speed %f,%f",head.x, head.y, this.speed.x, this.speed.y));
 
         if (this.newSegs > 0) {
             this.newSegs -= 1;
@@ -281,7 +300,11 @@ class Snek extends PosObject {
         float size = seg.size;
 
         fill(c);
-        rect(p.x, p.y, size, size);
+        if (RECT_MODE) {
+            rect(p.x, p.y, size, size);
+        } else {
+            circle(p.x, p.y, size);
+        }
     }
 
     void draw() {
@@ -342,9 +365,9 @@ class Help {
         lines.add("o: Click to stop" + STOP_MODE);
         
         lines.add("c: Centered segments " + CENTER_MODE);
-        lines.add("g: Align to grid (TODO) " + GRID_MODE);
+        lines.add("g: Align to grid (TODO) " + GRID_MODE); // TODO what?
         lines.add(" : GAP_SIZE " + GAP_SIZE);
-        lines.add("b: BOMB_MODE TODO" + BOMB_MODE);
+        lines.add("b: BOMB_MODE TODO" + BOMB_MODE); // TODO
         this.lines = lines;
 
         int lineHeight = 15;
@@ -353,23 +376,10 @@ class Help {
             fill(200);
             textSize(15);
             text(lines.get(l),100, 100+ l*15);
-            // println(lines.get(l));
         }
     }
     
 }
-
-class Bomb extends PosObject  {
-    int age = 0;
-
-    void act() {
-        age++;
-    }
-    void dead () {
-
-    }
-    void draw () {
-        // circle()
     }
 }
 
@@ -541,6 +551,12 @@ void keyPressed() {
         if (key == '-') {
             SPAWN_COUNT -=2;
         }
+    }
+    if (key == '[') {
+        TURN_RADIUS*=2;
+    }
+    if (key == ']') {
+        TURN_RADIUS/=2;;
     }
 
     if (key == ',') {
