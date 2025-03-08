@@ -1,3 +1,4 @@
 # TODOs
  - improve help screen 
  - cleanup variable names
+ - add smooth mode

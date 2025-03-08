@@ -1,3 +1,4 @@
+
 int noSnek = 60;
 int SNEK_SEG_SIZE = 15;
 int BORED_AFTER = 10;
@@ -38,7 +39,7 @@ boolean VAR_SEG_SIZE = true;
 int COLOR_MODE = 2;
 boolean CENTER_MODE = true;
 
-
+int textSize = 19;
 
 
 interface HasPos {
@@ -176,7 +177,8 @@ World w;
 void setup() {
     size(1920,1080);
     frameRate(fr);
-
+    textSize(textSize);
+    
     w = new World();
 }
 
@@ -206,7 +208,7 @@ void mouseClicked() {
 void keyPressed() {
     if (key == 'h') {
         if (w.help == null) {
-            w.help = new Help();
+            w.help = new Help(new PVector(width/2, height/2));
         } else {
             w.help = null;
         }
