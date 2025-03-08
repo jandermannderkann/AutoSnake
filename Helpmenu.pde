@@ -76,6 +76,7 @@ class Help extends PosObject {
         lines.add("n: Snakes leave trails=" + b2str(CLEAR_BG_MODE));
         lines.add("s: Varying segments=" + b2str(VAR_SEG_SIZE));
         lines.add("c: Align to Segments to Edge=" + b2str(CENTER_MODE));
+        lines.add("o: Draw segments as: " + (RECT_MODE ? "Square" : "Circle"));
         lines.add("");
 
         lines.add("o: Click to pause=" + b2str(STOP_MODE));

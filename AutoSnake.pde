@@ -235,6 +235,9 @@ void keyPressed() {
     if (key == 'r') {
         w.reset();
     }
+    if (key == 'o') {
+        RECT_MODE = !RECT_MODE;
+    }
     if (key == 'n') {
         CLEAR_BG_MODE = !CLEAR_BG_MODE;
     }
