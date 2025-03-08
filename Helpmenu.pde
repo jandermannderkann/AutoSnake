@@ -77,9 +77,10 @@ class Help extends PosObject {
         lines.add("s: Varying segments=" + b2str(VAR_SEG_SIZE));
         lines.add("c: Align to Segments to Edge=" + b2str(CENTER_MODE));
         lines.add("o: Draw segments as: " + (RECT_MODE ? "Square" : "Circle"));
+        lines.add("k: Move Segments like the Snake is drunk=" + b2str(DRUNK_MODE));
         lines.add("");
 
-        lines.add("o: Click to pause=" + b2str(STOP_MODE));
+        lines.add("u: Click to pause=" + b2str(STOP_MODE));
         lines.add("p: Click to spawn one Snake=" + b2str(SPAWN_MODE));        
         lines.add("g: Align Snakes to grid=" + b2str(GRID_MODE)); // TODO what?
         lines.add("Size between Snakes-paths=" + GAP_SIZE);

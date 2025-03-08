@@ -160,7 +160,11 @@ class Snek extends PosObject {
     }
 
     void move() {
-        this.speed.setMag(SNEK_SEG_SIZE);
+        if (DRUNK_MODE) {
+            for (SnekSeg s : this.segs) {
+                s.pos.add(PVector.mult(this.speed,0.1));
+            }
+        }
         this.pos.add(this.speed);
         PVector head = this.pos.copy();
         this.segs.add( new SnekSeg(head, SNEK_SEG_SIZE, this.col));
@@ -171,6 +175,8 @@ class Snek extends PosObject {
             this.lastSeg = segs.get(0);
             this.segs.remove(0);
         }
+
+
     }
     boolean dead() {
         return this.age > MAX_AGE;

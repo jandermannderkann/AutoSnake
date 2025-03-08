@@ -21,6 +21,7 @@ color LAST_SEG_COL = color(10);
 int BOMB_SIZE = 200;
 
 boolean RECT_MODE =  false;
+boolean DRUNK_MODE =  false;
 boolean VARIABLE_TURNS =  false;
 boolean VARYING_BOREDNESS =  false;
 boolean GRID_MODE = true;
@@ -238,6 +239,12 @@ void keyPressed() {
     if (key == 'o') {
         RECT_MODE = !RECT_MODE;
     }
+    if (key == 'u') {
+        STOP_MODE = !STOP_MODE;
+    }
+    if (key == 'k') {
+        DRUNK_MODE = !DRUNK_MODE;
+    }
     if (key == 'n') {
         CLEAR_BG_MODE = !CLEAR_BG_MODE;
     }
@@ -269,11 +276,11 @@ void keyPressed() {
         TURN_RADIUS/=2;
     }
 
-    if (key == ',') {
+    if (key == '.') {
         fr+=3;
         frameRate(fr);
     }
-    if (key == '.') {
+    if (key == ',') {
         fr-=3;
         frameRate(fr);
     }
