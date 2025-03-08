@@ -120,8 +120,10 @@ class World {
         }
 
     }
+
     public World() {
         this.spawn(noSnek);
+        this.help = new Help(new PVector(width/2, height/2));
     }
 
     boolean checkCollision(Snek snekToCheck) {
@@ -167,7 +169,7 @@ class World {
         for (Snek s : this.sneks) {
             s.draw();
         }
-        if (this.help != null) {
+        if (this.help.show()) {
             this.help.draw();
         }
     }
@@ -207,11 +209,7 @@ void mouseClicked() {
 
 void keyPressed() {
     if (key == 'h') {
-        if (w.help == null) {
-            w.help = new Help(new PVector(width/2, height/2));
-        } else {
-            w.help = null;
-        }
+        w.help.toggle();
     }
     if (key == 'd') {
         DIAG_MODE = !DIAG_MODE;
@@ -265,7 +263,7 @@ void keyPressed() {
         TURN_RADIUS*=2;
     }
     if (key == ']') {
-        TURN_RADIUS/=2;;
+        TURN_RADIUS/=2;
     }
 
     if (key == ',') {
@@ -276,4 +274,10 @@ void keyPressed() {
         fr-=3;
         frameRate(fr);
     }
+    if (w==null) {
+    print("No world");
+    }
+    if (w.help==null) {
+    print("No Help");}
+    w.help.updateText();
 }

@@ -5,7 +5,15 @@ class Help extends PosObject {
     PVector size;
     float padding = 0;
 
+    boolean hidden = true;
     
+    public boolean show() {
+        return !this.hidden;
+    }
+
+    public void toggle() {
+        this.hidden = !this.hidden;
+    }
 
     public Help(PVector center) {
        this.padding = 3*textSize;
@@ -52,22 +60,29 @@ class Help extends PosObject {
         lines.add(".: Make slower");
         lines.add("");
 
-        lines.add("Toggle:");
-        lines.add("d: Move diagonally " + b2str(DIAG_MODE));
-        lines.add("n: Snakes leave trails" + b2str(CLEAR_BG_MODE));
-        lines.add("s: Varying segments " + b2str(VAR_SEG_SIZE));
-        
-        lines.add("p: Click to spawn one Snake" + b2str(SPAWN_MODE));        
+        lines.add("Turn Radius: " + TURN_RADIUS + "deg");
+        lines.add("[: Turn less");
+        lines.add("]: Turn more");
+        lines.add("");
+
+
         lines.add("  a: Spawn " +SPAWN_COUNT+ " new Snakes");
         lines.add("  +: Incerease number of new Snakes ");
         lines.add("  -: Decrease number of new Snakes");
+        lines.add("");
 
-        lines.add("o: Click to pause: " + b2str(STOP_MODE));
-        
-        lines.add("c: Align to Segments to Edge" + b2str(CENTER_MODE));
-        lines.add("g: Align Snakes to grid (TODO) " + b2str(GRID_MODE)); // TODO what?
-        lines.add("Size between Snakes-paths: " + GAP_SIZE);
-        lines.add("b: Click to spawn bomb" + b2str(BOMB_MODE)); // TODO
+        lines.add("Toggle:");
+        lines.add("d: Move diagonally=" + b2str(DIAG_MODE));
+        lines.add("n: Snakes leave trails=" + b2str(CLEAR_BG_MODE));
+        lines.add("s: Varying segments=" + b2str(VAR_SEG_SIZE));
+        lines.add("c: Align to Segments to Edge=" + b2str(CENTER_MODE));
+        lines.add("");
+
+        lines.add("o: Click to pause=" + b2str(STOP_MODE));
+        lines.add("p: Click to spawn one Snake=" + b2str(SPAWN_MODE));        
+        lines.add("g: Align Snakes to grid=" + b2str(GRID_MODE)); // TODO what?
+        lines.add("Size between Snakes-paths=" + GAP_SIZE);
+        lines.add("b: Click to spawn bomb=" + b2str(BOMB_MODE)); // TODO
         this.lines = lines;
         
         
