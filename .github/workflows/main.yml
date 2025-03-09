@@ -14,9 +14,9 @@ jobs:
       - name: install dependencies
         run: sudo apt-get update && sudo apt-get install -y wget curl tar openjdk-21-jre libprocessing-core-java
       - name: install processing from static github-link
-        run: wget https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
-        # TODO try making the download automatic with something like this:
-        # run: curl -s https://api.github.com/repos/processing/processing4/releases/latest | grep -e browser_download_url | grep "/processing-.*-linux-x64.tgz" | cut -d : -f 2,3 | tr -d \" \
+        run: wget -q https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
+      - name: ls1
+        run: ls
       - name: unpack
         run: tar -xf processing-4.3.4-linux-x64.tgz
       - uses: actions/checkout@v4 
