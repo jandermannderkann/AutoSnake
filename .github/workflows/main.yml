@@ -18,6 +18,8 @@ jobs:
         # TODO try making the download automatic with something like this:
         # run: curl -s https://api.github.com/repos/processing/processing4/releases/latest | grep -e browser_download_url | grep "/processing-.*-linux-x64.tgz" | cut -d : -f 2,3 | tr -d \" \
       - uses: actions/checkout@v4 
+      - name: ls
+        run: ls
       - name: export application
         # TODO add --no-java switch
         run: ./processing-4.3.4/processing-java --sketch="AutoSnake" --output="dist/${{ matrix.target }}" --export --variant ${{ matrix.target }} 
