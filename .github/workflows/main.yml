@@ -2,25 +2,27 @@ on:
   push:
     branches:
     - main
-
+    
 jobs:
   build:
-    name: build jar
+    name: Export sketch for multiple targets
     runs-on: ubuntu-latest
+    strategy:
+      matrix: 
+        target : ['linux-amd64', 'windows-amd64'] # 'linux-arm', 'linux-aarch64' (R-Pi)
     steps:
+      - name: install dependencies
+        run: sudo apt-get update && sudo apt-get install -y wget curl tar openjdk-21-jre libprocessing-core-java
+      - name: install processing from static github-link
+        run: wget https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz && tar -xf processing-4.3.4-linux-x64.tgz
+        # TODO try making the download automatic with something like this:
+        # run: curl -s https://api.github.com/repos/processing/processing4/releases/latest | grep -e browser_download_url | grep "/processing-.*-linux-x64.tgz" | cut -d : -f 2,3 | tr -d \" \
       - uses: actions/checkout@v4
-      - name: install java
-        # uses: actions/cache@v3
-        run: sudo apt-get update && sudo apt-get install -y openjdk-21-jre wget curl tar
-      - name: install processing
-        run: sudo apt-get update && sudo apt-get install libprocessing-core-java
-      - name: install actuall processing
-      # run: curl -s https://api.github.com/repos/processing/processing4/releases/latest | grep -e browser_download_url | grep "/processing-.*-linux-x64.tgz" | cut -d : -f 2,3 | tr -d \" \
-        run: wget https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
-      - name: unpack
-        run: tar -xf processing-4.3.4-linux-x64.tgz
+        with:
+          path: "source/"
       - name: ls
-        run: ls
+        run: ls && ls source/ 
       - name: export application
-        run: ./processing-4.3.4/processing-java --help
+        # TODO add --no-java switch
+        run: ./processing-4.3.4/processing-java --sketch="source" --output="dist/${{ matrix.target }}" --export --variant ${{ matrix.target }} 
         
