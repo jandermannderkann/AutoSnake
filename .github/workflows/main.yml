@@ -16,8 +16,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y wget curl tar openjdk-21-jre libprocessing-core-java
       - name: install processing from static github-link
         run: wget -q https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
-      - name: ls1
-        run: Log downloaded processing archive
+      - name: Log downloaded processing archive
+        run: ls
       - name: unpack
         run: tar -xf processing-4.3.4-linux-x64.tgz
       - name: Log unpacked processing files
