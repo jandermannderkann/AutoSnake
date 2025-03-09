@@ -22,5 +22,5 @@ jobs:
         run: ls && ls source/ 
       - name: export application
         # TODO add --no-java switch
-        run: ./processing-4.3.4/processing-java --sketch="source" --output="dist/${{ matrix.target }}" --export --variant ${{ matrix.target }} 
+        run: ./processing-4.3.4/processing-java --sketch="AutoSnake" --output="dist/${{ matrix.target }}" --export --variant ${{ matrix.target }} 
         
