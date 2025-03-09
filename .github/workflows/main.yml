@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build:
+    name: build jar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install java
+        run: sudo apt-get update && sudo apt-get install -y openjdk-21-jre wget curl tar
+      - name: install processing
+        run: sudo apt-get update && sudo apt-get install libprocessing-core-java
+      - name: install actuall processing
+      # run: curl https://api.github.com/repos/processing/processing4/releases/latest | grep -e browser_download_url | grep /processing-.*-linux-.*.tgz | cut -d : -f 2,3 \ | tr -d \" \  | wget -qi
+        run: wget https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
+      - name: unpack
+        run: tar -xf processing-4.3.4-linux-x64.tgz
+      - name: export application
+        run: processing-java --help
+        
