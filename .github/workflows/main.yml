@@ -19,5 +19,5 @@ jobs:
       - name: unpack
         run: tar -xf processing-4.3.4-linux-x64.tgz
       - name: export application
-        run: /processing-4.3.4-linux-x64.tgz/processing-java --help
+        run: ./processing-4.3.4-linux-x64/processing-java --help
         
