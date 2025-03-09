@@ -11,6 +11,7 @@ jobs:
       matrix: 
         target : ['linux-amd64', 'windows-amd64'] # 'linux-arm', 'linux-aarch64' (R-Pi)
     steps:
+      - uses: actions/checkout@v4 
       - name: install dependencies
         run: sudo apt-get update && sudo apt-get install -y wget curl tar openjdk-21-jre libprocessing-core-java
       - name: install processing from static github-link
@@ -19,7 +20,6 @@ jobs:
         run: ls
       - name: unpack
         run: tar -xf processing-4.3.4-linux-x64.tgz
-      - uses: actions/checkout@v4 
       - name: ls
         run: ls
       - name: export application
