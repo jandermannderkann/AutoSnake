@@ -17,12 +17,18 @@ jobs:
       - name: install processing from static github-link
         run: wget -q https://github.com/processing/processing4/releases/download/processing-1297-4.3.4/processing-4.3.4-linux-x64.tgz
       - name: ls1
-        run: ls
+        run: Log downloaded processing archive
       - name: unpack
         run: tar -xf processing-4.3.4-linux-x64.tgz
-      - name: ls
+      - name: Log unpacked processing files
         run: ls
       - name: export application
         # TODO add --no-java switch
         run: ./processing-4.3.4/processing-java --sketch="AutoSnake" --output="dist/${{ matrix.target }}" --export --variant ${{ matrix.target }} 
-        
+      - name: Log generated files
+        run: ls
+      - name: Archive export artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Target-folder ${{ matrix.target }}
+          path: dist/${{ matrix.target }}
