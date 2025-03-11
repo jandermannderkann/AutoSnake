@@ -208,7 +208,15 @@ void mouseClicked() {
 }
 
 
+
+ArrayList<HotKey> hotkeys = new ArrayList<HotKey>();
+
+
 void keyPressed() {
+    for (HotKey k : hotkeys) {
+      
+    }
+
     if (key == 'h') {
         w.help.toggle();
     }
