@@ -56,8 +56,8 @@ class Help extends PosObject {
         lines.add("");
 
         lines.add("Animation Speed: " + frameRate + "fps");
-        lines.add(",: Make faster");
-        lines.add(".: Make slower");
+        lines.add(",: Make slower");        
+        lines.add(".: Make faster");
         lines.add("");
 
         lines.add("Turn Radius: " + TURN_RADIUS + "deg");
@@ -75,7 +75,7 @@ class Help extends PosObject {
         lines.add("d: Move diagonally=" + b2str(DIAG_MODE));
         lines.add("n: Snakes leave trails=" + b2str(CLEAR_BG_MODE));
         lines.add("s: Varying segments=" + b2str(VAR_SEG_SIZE));
-        lines.add("c: Align to Segments to Edge=" + b2str(CENTER_MODE));
+        lines.add("c: Aligninsterburg/insterbase/pulls to Segments to Edge=" + b2str(CENTER_MODE));
         lines.add("o: Draw segments as: " + (RECT_MODE ? "Square" : "Circle"));
         lines.add("k: Move Segments like the Snake is drunk=" + b2str(DRUNK_MODE));
         lines.add("");
